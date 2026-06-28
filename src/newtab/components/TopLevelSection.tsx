@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { BookmarkNode } from '../types';
 import { NEUTRAL_ACCENT, accentVars } from '../lib/accent';
@@ -7,6 +6,7 @@ import { ChevronIcon } from './Icons';
 import { LinkGrid } from './LinkGrid';
 import { CollapsibleFolder } from './CollapsibleFolder';
 import { useDrag } from './DragProvider';
+import { useCollapse } from './CollapseProvider';
 import type { BookmarkActions } from '../hooks/useBookmarkActions';
 
 // Other Bookmarks / Mobile Bookmarks → a muted section below the divider, in a
@@ -20,8 +20,9 @@ export function TopLevelSection({
   label: string;
   actions: BookmarkActions;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
   const drag = useDrag();
+  const collapse = useCollapse();
+  const collapsed = collapse.isCollapsed(section.id, false);
 
   if (countAll(section) === 0) return null;
 
@@ -36,7 +37,7 @@ export function TopLevelSection({
     <div className="card" style={accentVars(NEUTRAL_ACCENT) as CSSProperties}>
       <div
         className={headerClass}
-        onClick={() => setCollapsed((c) => !c)}
+        onClick={() => collapse.toggle(section.id, false)}
         {...drag.folderDropProps(section.id)}
       >
         <div className="card-header-left">

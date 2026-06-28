@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { BookmarkNode } from '../types';
 import type { Accent } from '../lib/accent';
@@ -8,6 +7,7 @@ import { ChevronIcon, PlusIcon } from './Icons';
 import { LinkGrid } from './LinkGrid';
 import { CollapsibleFolder } from './CollapsibleFolder';
 import { useDrag } from './DragProvider';
+import { useCollapse } from './CollapseProvider';
 import type { BookmarkActions } from '../hooks/useBookmarkActions';
 
 // Level-1 folder on the Bookmarks Bar → a category card with a colored left
@@ -22,8 +22,9 @@ export function CategoryCard({
   accent: Accent;
   actions: BookmarkActions;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
   const drag = useDrag();
+  const collapse = useCollapse();
+  const collapsed = collapse.isCollapsed(category.id, false);
 
   if (countAll(category) === 0) return null;
 
@@ -38,7 +39,7 @@ export function CategoryCard({
     <div className="card" style={accentVars(accent) as CSSProperties}>
       <div
         className={headerClass}
-        onClick={() => setCollapsed((c) => !c)}
+        onClick={() => collapse.toggle(category.id, false)}
         onContextMenu={(e) => actions.onFolderContextMenu(e, category)}
         {...drag.folderDropProps(category.id)}
       >

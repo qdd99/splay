@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import type { BookmarkNode } from '../types';
 import { countAll } from '../lib/fuzzyMatch';
 import { ChevronIcon, FolderIcon, PlusIcon } from './Icons';
 import { LinkGrid } from './LinkGrid';
 import { useDrag } from './DragProvider';
+import { useCollapse } from './CollapseProvider';
 import type { BookmarkActions } from '../hooks/useBookmarkActions';
 
 // Unified collapsible folder used at every nesting level (2, 3, 4, …). All
@@ -19,8 +19,10 @@ export function CollapsibleFolder({
   defaultOpen: boolean;
   actions: BookmarkActions;
 }) {
-  const [collapsed, setCollapsed] = useState(!defaultOpen);
   const drag = useDrag();
+  const collapse = useCollapse();
+  const defaultCollapsed = !defaultOpen;
+  const collapsed = collapse.isCollapsed(folder.id, defaultCollapsed);
 
   // Hide folders with no bookmarks anywhere beneath them.
   if (countAll(folder) === 0) return null;
@@ -36,7 +38,7 @@ export function CollapsibleFolder({
     <div className="folder">
       <div
         className={headerClass}
-        onClick={() => setCollapsed((c) => !c)}
+        onClick={() => collapse.toggle(folder.id, defaultCollapsed)}
         onContextMenu={(e) => actions.onFolderContextMenu(e, folder)}
         {...drag.folderDropProps(folder.id)}
       >
