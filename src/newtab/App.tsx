@@ -1,14 +1,16 @@
 import { useMemo, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { BookmarkNode } from './types';
 import { useBookmarks } from './hooks/useBookmarks';
 import { useSearchHotkeys } from './hooks/useSearchHotkeys';
 import { useBookmarkActions } from './hooks/useBookmarkActions';
 import { useArrowNavigation } from './hooks/useArrowNavigation';
+import { useColumnCount } from './hooks/useColumnCount';
 import { useSettings } from './hooks/useSettings';
 import { useAccentMap } from './hooks/useAccentMap';
-import { densityScale } from './lib/settings';
+import { densityScale, linkGridTemplate } from './lib/settings';
 import { countAll } from './lib/fuzzyMatch';
+import { distributeGreedy, estimateCardWeight } from './lib/layout';
 import { searchBookmarks } from './lib/search';
 import { SearchBar } from './components/SearchBar';
 import { SearchResults } from './components/SearchResults';
@@ -55,13 +57,58 @@ export function App() {
     [root, searchQuery],
   );
 
+  const totalBookmarks = useMemo(
+    () => topLevel.reduce((sum, c) => sum + countAll(c), 0),
+    [topLevel],
+  );
+
   const showOther = settings.showOther && countAll(otherBookmarks) > 0;
   const showMobile = settings.showMobile && countAll(mobileBookmarks) > 0;
-  const hasBottom = showOther || showMobile;
 
-  const rootStyle = { ['--scale']: densityScale(settings.density) } as CSSProperties;
-  const columnStyle: CSSProperties | undefined =
-    settings.columns > 0 ? { columnCount: settings.columns } : undefined;
+  const numColumns = useColumnCount(settings.columns);
+
+  // Build the card list in order, then greedily place each card into the column
+  // with the most empty space (least accumulated weight). Weights are estimated
+  // from content, not rendered height, so collapsing/expanding a card never
+  // changes the distribution — cards stay in their columns.
+  const cardItems: { node: BookmarkNode; el: ReactNode }[] = categories
+    .filter((c) => countAll(c) > 0)
+    .map((category) => ({
+      node: category,
+      el: (
+        <CategoryCard
+          key={category.id}
+          category={category}
+          accent={accentFor(category.id)}
+          actions={actions}
+        />
+      ),
+    }));
+  if (showOther) {
+    cardItems.push({
+      node: otherBookmarks,
+      el: (
+        <TopLevelSection key="__other" section={otherBookmarks} label="Other Bookmarks" actions={actions} />
+      ),
+    });
+  }
+  if (showMobile) {
+    cardItems.push({
+      node: mobileBookmarks,
+      el: (
+        <TopLevelSection key="__mobile" section={mobileBookmarks} label="Mobile Bookmarks" actions={actions} />
+      ),
+    });
+  }
+  const weights = cardItems.map((item) => estimateCardWeight(item.node, settings.cardColumns));
+  const masonry: ReactNode[][] = distributeGreedy(weights, numColumns).map((indices) =>
+    indices.map((i) => cardItems[i].el),
+  );
+
+  const rootStyle = {
+    ['--scale']: densityScale(settings.density),
+    ['--link-grid-cols']: linkGridTemplate(settings.cardColumns),
+  } as CSSProperties;
 
   return (
     <div className="splay" style={rootStyle}>
@@ -73,6 +120,7 @@ export function App() {
             onChange={setQuery}
             onClear={() => setQuery('')}
             inputRef={searchRef}
+            count={root ? totalBookmarks : undefined}
           />
           <div className="header-side header-side--right">
             <button
@@ -104,39 +152,18 @@ export function App() {
             </div>
           )}
 
-          <main className="container columns" style={columnStyle}>
-            {categories.map((category) => (
-              <CategoryCard
-                key={category.id}
-                category={category}
-                accent={accentFor(category.id)}
-                actions={actions}
-              />
+          <main className="container columns">
+            {masonry.map((col, i) => (
+              <div className="col" key={i}>
+                {col}
+              </div>
             ))}
           </main>
-
-          {hasBottom && (
-            <div className="container">
-              <div className="divider" />
-              <div className="bottom-sections">
-                {showOther && (
-                  <TopLevelSection section={otherBookmarks} label="Other Bookmarks" actions={actions} />
-                )}
-                {showMobile && (
-                  <TopLevelSection
-                    section={mobileBookmarks}
-                    label="Mobile Bookmarks"
-                    actions={actions}
-                  />
-                )}
-              </div>
-            </div>
-          )}
         </>
       )}
 
       <footer className="footer">
-        Chrome bookmarks · Real-time sync · Your data never leaves the browser
+        Real-time sync · Your data never leaves the browser
       </footer>
     </div>
   );

@@ -1,64 +1,91 @@
-/* Design tokens. Light mode is the default; dark mode follows the OS via
-   prefers-color-scheme. Per-category accent colors are injected at runtime as
-   an inline `--accent` custom property on each card and inherited by its links. */
+/* Splay design tokens — derived from splay-design-language/tokens.css.
+   Light = "daylight" gradient + elevated white cards (warm neutrals).
+   Dark  = "night" gradient + glass cards, via prefers-color-scheme.
+   Per-category accent trios (base/soft/deep) are injected at runtime as
+   --accent / --accent-soft / --accent-deep on each card. */
 
 :root {
   color-scheme: light dark;
 
-  --bg-page: #f1f5f9;
+  /* Page gradient — daylight (lavender glow → warm cream) */
+  --bg-grad: linear-gradient(180deg, #ece6f0 0%, #f1ece9 45%, #f5f3ee 100%);
+  --bg-page: #f5f3ee;
+
+  /* Surfaces (warm) */
   --bg-card: #ffffff;
-  --bg-hover: #f8fafc;
+  --bg-hover: #f3efe8;
+  --chip-bg: #f0ece5;
 
-  --border-subtle: #e2e8f0;
-  --border-section: #f1f5f9;
+  /* Hairlines / dividers */
+  --border-subtle: #ebe7e1;
+  --border-section: #f0ebe4;
 
-  --text-primary: #0f172a;
-  --text-body: #334155;
-  --text-secondary: #64748b;
-  --text-muted: #94a3b8;
-  --text-faintest: #cbd5e1;
+  /* Text (warm) */
+  --text-primary: #2e2a33; /* ink */
+  --text-body: #3b3742;
+  --text-secondary: #8b8693; /* muted */
+  --text-muted: #8b8693;
+  --text-faintest: #b8b3bd; /* faint */
 
-  --section-accent: #cbd5e1;
-  --pin-accent: #475569;
+  /* Neutral / system accents */
+  --section-accent: #8b8693;
+  --pin-accent: #5b73c4;
 
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
-  --search-focus: #4361ee;
-  --search-focus-ring: rgba(67, 97, 238, 0.1);
-  --brand-grad: linear-gradient(135deg, #4361ee, #7c3aed);
+  /* Interactive */
+  --search-focus: #5b73c4;
+  --search-focus-ring: rgba(91, 115, 196, 0.18);
+  --danger: #c2638f;
 
-  --header-bg: rgba(241, 245, 249, 0.85);
+  --brand-grad: linear-gradient(135deg, #5b73c4, #8a6fc0);
+
+  /* Radii */
+  --radius-card: 16px;
+  --radius-tile: 6px;
+
+  /* Elevation */
+  --shadow-card: 0 4px 22px -16px rgba(46, 42, 51, 0.3);
+  --shadow-float: 0 6px 22px -14px rgba(46, 42, 51, 0.22);
 
   /* Content font-size multiplier, driven by the density setting. */
   --scale: 1;
 
-  --font-sans: -apple-system, "Segoe UI", system-ui, "PingFang SC",
-    "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+  --font-sans: "Hanken Grotesk", -apple-system, "Segoe UI", system-ui,
+    "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-page: #0b1120;
-    --bg-card: #131b2e;
-    --bg-hover: #1e293b;
+    /* Page gradient — night */
+    --bg-grad:
+      radial-gradient(900px 520px at 70% 8%, rgba(150, 170, 255, 0.22), transparent 60%),
+      radial-gradient(1200px 800px at 50% 120%, rgba(8, 8, 20, 0.6), transparent 70%),
+      linear-gradient(165deg, #232842 0%, #383a5e 50%, #4a4063 100%);
+    --bg-page: #232842;
 
-    --border-subtle: #1e293b;
-    --border-section: #1e293b;
+    /* Glass surfaces */
+    --bg-card: rgba(255, 255, 255, 0.1);
+    --bg-hover: rgba(255, 255, 255, 0.12);
+    --chip-bg: rgba(255, 255, 255, 0.16);
 
-    --text-primary: #f1f5f9;
-    --text-body: #cbd5e1;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --text-faintest: #475569;
+    --border-subtle: rgba(255, 255, 255, 0.16);
+    --border-section: rgba(255, 255, 255, 0.12);
 
-    --section-accent: #475569;
-    --pin-accent: #94a3b8;
+    --text-primary: #ffffff;
+    --text-body: rgba(255, 255, 255, 0.9);
+    --text-secondary: rgba(255, 255, 255, 0.62);
+    --text-muted: rgba(255, 255, 255, 0.55);
+    --text-faintest: rgba(255, 255, 255, 0.4);
 
-    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
-    --search-focus: #6d83f2;
-    --search-focus-ring: rgba(109, 131, 242, 0.18);
+    --section-accent: rgba(255, 255, 255, 0.65);
+    --pin-accent: #aab6ea;
 
-    --header-bg: rgba(11, 17, 32, 0.82);
+    --search-focus: #aab6ea;
+    --search-focus-ring: rgba(170, 182, 234, 0.25);
+    --danger: #e08bb0;
+
+    --shadow-card: 0 22px 54px -22px rgba(18, 14, 38, 0.5);
+    --shadow-float: 0 16px 44px -20px rgba(8, 8, 20, 0.6);
   }
 }
 
@@ -70,22 +97,29 @@ html,
 body {
   margin: 0;
   padding: 0;
+  min-height: 100%;
 }
 
 body {
   font-family: var(--font-sans);
-  background: var(--bg-page);
   color: var(--text-body);
+  background-color: var(--bg-page);
+  background-image: var(--bg-grad);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  -webkit-font-smoothing: antialiased;
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--text-faintest);
-  border-radius: 4px;
+  background: color-mix(in srgb, var(--text-faintest) 60%, transparent);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }

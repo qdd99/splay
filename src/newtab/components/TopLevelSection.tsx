@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { BookmarkNode } from '../types';
+import { NEUTRAL_ACCENT, accentVars } from '../lib/accent';
 import { countAll } from '../lib/fuzzyMatch';
 import { ChevronIcon } from './Icons';
 import { LinkGrid } from './LinkGrid';
@@ -29,21 +30,22 @@ export function TopLevelSection({
   const subFolders = children.filter((c) => !c.url && c.children).filter((f) => countAll(f) > 0);
 
   const headerClass =
-    'card-header' +
-    (collapsed ? ' card-header--collapsed' : '') +
-    (drag.isFolderDropTarget(section.id) ? ' card-header--drop' : '');
+    'card-header' + (drag.isFolderDropTarget(section.id) ? ' card-header--drop' : '');
 
   return (
-    <div className="card" style={{ ['--accent']: 'var(--section-accent)' } as CSSProperties}>
+    <div className="card" style={accentVars(NEUTRAL_ACCENT) as CSSProperties}>
       <div
         className={headerClass}
         onClick={() => setCollapsed((c) => !c)}
         {...drag.folderDropProps(section.id)}
       >
         <div className="card-header-left">
-          <span className="card-title card-title--section">{label}</span>
+          <span className="card-dot" />
+          <span className="card-title">{label}</span>
         </div>
-        <ChevronIcon collapsed={collapsed} />
+        <div className="card-header-right">
+          <ChevronIcon collapsed={collapsed} />
+        </div>
       </div>
       {!collapsed && (
         <div className="card-body">
@@ -52,6 +54,7 @@ export function TopLevelSection({
             parent={section}
             onBookmarkContextMenu={actions.onBookmarkContextMenu}
           />
+          {directLinks.length > 0 && subFolders.length > 0 && <div className="card-sep" />}
           {subFolders.map((sf) => (
             <CollapsibleFolder
               key={sf.id}

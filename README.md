@@ -1,6 +1,6 @@
-# Splay
-
-**Your bookmarks, splayed into a full‑screen directory.**
+<p align="center">
+  <img src="banner.png" alt="Splay — Your bookmarks, splayed into a full-screen directory." width="800">
+</p>
 
 Splay replaces your Chrome new tab with a dense, categorized, multi‑column directory of all your bookmarks — synced in real time.
 

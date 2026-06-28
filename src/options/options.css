@@ -4,7 +4,7 @@
   align-items: flex-start;
   justify-content: center;
   padding: 48px 20px;
-  background: var(--bg-page);
+  background: transparent;
 }
 
 .opt-card {
@@ -88,7 +88,7 @@
 
 .segmented {
   display: inline-flex;
-  background: var(--bg-page);
+  background: var(--bg-hover);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 2px;

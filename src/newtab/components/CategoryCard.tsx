@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { BookmarkNode } from '../types';
+import type { Accent } from '../lib/accent';
+import { accentVars } from '../lib/accent';
 import { countAll } from '../lib/fuzzyMatch';
 import { ChevronIcon, PlusIcon } from './Icons';
 import { LinkGrid } from './LinkGrid';
@@ -17,7 +19,7 @@ export function CategoryCard({
   actions,
 }: {
   category: BookmarkNode;
-  accent: string;
+  accent: Accent;
   actions: BookmarkActions;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -30,12 +32,10 @@ export function CategoryCard({
   const subFolders = children.filter((c) => !c.url && c.children).filter((f) => countAll(f) > 0);
 
   const headerClass =
-    'card-header' +
-    (collapsed ? ' card-header--collapsed' : '') +
-    (drag.isFolderDropTarget(category.id) ? ' card-header--drop' : '');
+    'card-header' + (drag.isFolderDropTarget(category.id) ? ' card-header--drop' : '');
 
   return (
-    <div className="card" style={{ ['--accent']: accent } as CSSProperties}>
+    <div className="card" style={accentVars(accent) as CSSProperties}>
       <div
         className={headerClass}
         onClick={() => setCollapsed((c) => !c)}
@@ -43,6 +43,7 @@ export function CategoryCard({
         {...drag.folderDropProps(category.id)}
       >
         <div className="card-header-left">
+          <span className="card-dot" />
           <span className="card-title">{category.title}</span>
         </div>
         <div className="card-header-right">
@@ -68,6 +69,7 @@ export function CategoryCard({
             parent={category}
             onBookmarkContextMenu={actions.onBookmarkContextMenu}
           />
+          {directLinks.length > 0 && subFolders.length > 0 && <div className="card-sep" />}
           {subFolders.map((sf) => (
             <CollapsibleFolder
               key={sf.id}

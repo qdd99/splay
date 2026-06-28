@@ -6,12 +6,17 @@ export function SearchBar({
   onChange,
   onClear,
   inputRef,
+  count,
 }: {
   query: string;
   onChange: (value: string) => void;
   onClear: () => void;
   inputRef: RefObject<HTMLInputElement>;
+  count?: number;
 }) {
+  const placeholder =
+    count != null ? `Search ${count.toLocaleString()} bookmarks…` : 'Search bookmarks…';
+
   return (
     <div className="search">
       <div className="search-icon">
@@ -23,7 +28,7 @@ export function SearchBar({
         type="text"
         value={query}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Search bookmarks…"
+        placeholder={placeholder}
         autoComplete="off"
         spellCheck={false}
         aria-label="Search bookmarks"

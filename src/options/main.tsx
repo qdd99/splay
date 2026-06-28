@@ -2,6 +2,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useSettings } from '../newtab/hooks/useSettings';
 import type { ColumnSetting, Density } from '../newtab/lib/settings';
+import '@fontsource/hanken-grotesk/400.css';
+import '@fontsource/hanken-grotesk/500.css';
+import '@fontsource/hanken-grotesk/600.css';
+import '@fontsource/hanken-grotesk/700.css';
 import '../newtab/styles/tokens.css';
 import './options.css';
 
@@ -76,8 +80,8 @@ function Options() {
 
           <div className="opt-control">
             <div className="opt-control-label">
-              <span>Columns</span>
-              <span className="opt-control-hint">Auto adapts to window width.</span>
+              <span>Page columns</span>
+              <span className="opt-control-hint">Category cards across the page. Auto adapts to width.</span>
             </div>
             <Segmented<ColumnSetting>
               value={settings.columns}
@@ -87,6 +91,23 @@ function Options() {
                 { label: '2', value: 2 },
                 { label: '3', value: 3 },
                 { label: '4', value: 4 },
+              ]}
+            />
+          </div>
+
+          <div className="opt-control">
+            <div className="opt-control-label">
+              <span>Links per card</span>
+              <span className="opt-control-hint">Link columns inside each card. Auto fills the width.</span>
+            </div>
+            <Segmented<ColumnSetting>
+              value={settings.cardColumns}
+              onChange={(cardColumns) => update({ cardColumns })}
+              options={[
+                { label: 'Auto', value: 0 },
+                { label: '1', value: 1 },
+                { label: '2', value: 2 },
+                { label: '3', value: 3 },
               ]}
             />
           </div>
