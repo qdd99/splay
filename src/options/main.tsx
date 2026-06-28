@@ -9,6 +9,44 @@ import '@fontsource/hanken-grotesk/700.css';
 import '../newtab/styles/tokens.css';
 import './options.css';
 
+// The Splay fan mark, reproduced from the canonical geometry in
+// scripts/gen-icons.mjs: five 11×40 full-pill bars sharing one bottom-center
+// pivot in a 60×52 box, fanned -34° → +34° and listed left→right so each blade
+// stacks above the one to its left.
+const FAN_BLADES = [
+  { angle: -34, color: '#8e9fe0' }, // indigo
+  { angle: -17, color: '#5fc8c4' }, // teal
+  { angle: 0, color: '#e090b4' }, // plum
+  { angle: 17, color: '#e0b06f' }, // clay
+  { angle: 34, color: '#b39ae0' }, // violet
+];
+
+function FanMark() {
+  return (
+    <svg viewBox="0 0 60 52" role="img" aria-label="Splay logo">
+      <defs>
+        <filter id="fan-shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="1.4" stdDeviation="1.6" floodColor="#2e2a33" floodOpacity="0.16" />
+        </filter>
+      </defs>
+      <g filter="url(#fan-shadow)">
+        {FAN_BLADES.map((blade) => (
+          <rect
+            key={blade.angle}
+            x={24.5}
+            y={6}
+            width={11}
+            height={40}
+            rx={5.5}
+            fill={blade.color}
+            transform={`rotate(${blade.angle} 30 46)`}
+          />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
 function Segmented<T extends string | number>({
   value,
   options,
@@ -68,7 +106,9 @@ function Options() {
     <div className="opt-page">
       <div className="opt-card">
         <div className="opt-head">
-          <div className="opt-logo">☷</div>
+          <div className="opt-logo">
+            <FanMark />
+          </div>
           <div>
             <h1 className="opt-title">Splay</h1>
             <p className="opt-tagline">Your bookmarks, splayed into a full-screen directory.</p>

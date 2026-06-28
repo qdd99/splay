@@ -289,6 +289,7 @@
   font-size: calc(14px * var(--scale));
   line-height: 1.3;
   min-width: 0;
+  cursor: default;
   transition: background 0.1s, color 0.1s;
 }
 
@@ -428,6 +429,7 @@ mark {
   color: var(--text-body);
   font-size: calc(14px * var(--scale));
   line-height: 1.3;
+  cursor: default;
   transition: background 0.1s, color 0.1s, box-shadow 0.1s;
 }
 
