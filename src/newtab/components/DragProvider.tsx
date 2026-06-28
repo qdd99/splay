@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useState } from 'react';
 import type { DragEvent as ReactDragEvent, HTMLAttributes, ReactNode } from 'react';
-import { computeMoveIndex } from '../lib/bookmarksApi';
 import { moveBookmark } from '../lib/bookmarks';
 
 // Drag-and-drop for bookmark links: reorder within a folder, or move across
@@ -10,7 +9,6 @@ import { moveBookmark } from '../lib/bookmarks';
 interface Dragging {
   id: string;
   parentId: string;
-  index: number; // real index within parent's children
 }
 
 type DropTarget =
@@ -50,9 +48,9 @@ export function DragProvider({ children }: { children: ReactNode }) {
     (from: Dragging, target: DropTarget) => {
       if (target.kind === 'link') {
         if (target.id === from.id) return;
-        const desiredIndex = target.position === 'before' ? target.index : target.index + 1;
-        const sameParent = from.parentId === target.parentId;
-        const index = computeMoveIndex(sameParent, from.index, desiredIndex);
+        // Insert before this position in the destination's current children;
+        // the bookmarks API handles the same-parent removal shift.
+        const index = target.position === 'before' ? target.index : target.index + 1;
         void moveBookmark(from.id, { parentId: target.parentId, index });
       } else {
         // Move into a folder: append at the end.
@@ -70,7 +68,7 @@ export function DragProvider({ children }: { children: ReactNode }) {
         e.stopPropagation();
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', id);
-        setDragging({ id, parentId, index });
+        setDragging({ id, parentId });
       },
       onDragEnd: () => reset(),
       onDragOver: (e: ReactDragEvent) => {

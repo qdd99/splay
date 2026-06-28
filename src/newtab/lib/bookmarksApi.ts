@@ -128,13 +128,16 @@ function createMockApi(): BookmarksApi {
     move: async (id, destination) => {
       const loc = findParentOf(id);
       if (!loc) return;
-      const [node] = loc.parent.children!.splice(loc.index, 1);
       const destParent = destination.parentId ? findNode(destination.parentId) : loc.parent;
       if (!destParent) return;
       destParent.children ??= [];
-      // `index` is the position in the destination array *after* the node has
-      // been removed — matching the convention used by computeMoveIndex.
-      const index = destination.index ?? destParent.children.length;
+      // Mirror chrome.bookmarks.move: `index` is the target position within the
+      // destination's *current* children, counting the node being moved. When
+      // moving within the same parent to a higher index, decrement to account
+      // for the node's own removal — exactly what Chromium's BookmarkModel does.
+      let index = destination.index ?? destParent.children.length;
+      if (destParent === loc.parent && index > loc.index) index -= 1;
+      const [node] = loc.parent.children!.splice(loc.index, 1);
       destParent.children.splice(Math.max(0, Math.min(index, destParent.children.length)), 0, node);
       notify();
     },
@@ -154,17 +157,4 @@ export function getBookmarksApi(): BookmarksApi {
   const chromeApi = typeof chrome !== 'undefined' ? chrome.bookmarks : undefined;
   instance = chromeApi ? createChromeApi(chromeApi) : createMockApi();
   return instance;
-}
-
-// Computes the `index` argument for a move so the dragged node lands before the
-// target position. The index is expressed against the destination's children
-// *after* the dragged node is removed — the convention chrome.bookmarks.move
-// uses, and which the mock store mirrors.
-export function computeMoveIndex(
-  sameParent: boolean,
-  fromIndex: number,
-  desiredIndex: number,
-): number {
-  if (sameParent && fromIndex < desiredIndex) return desiredIndex - 1;
-  return desiredIndex;
 }
