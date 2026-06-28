@@ -1,5 +1,6 @@
 // Generates Splay's extension icons (16/48/128 px) as PNGs with no external
-// dependencies: it rasterizes the ☷ trigram in white on the brand gradient and
+// dependencies: it rasterizes the design-language "fan" mark (five rounded
+// blades fanning from a shared bottom pivot) on a soft daylight gradient, and
 // encodes the PNG by hand (zlib via Node's built-in module).
 //
 // Run with: node scripts/gen-icons.mjs
@@ -10,8 +11,20 @@ import { resolve } from 'node:path';
 
 const OUT_DIR = resolve(import.meta.dirname, '..', 'public', 'icons');
 
-const C1 = [0x43, 0x61, 0xee]; // #4361EE
-const C2 = [0x7c, 0x3a, 0xed]; // #7C3AED
+// Background = daylight gradient (lavender → warm cream).
+const BG_TOP = [0xe7, 0xe2, 0xf2];
+const BG_BOTTOM = [0xf4, 0xef, 0xe7];
+
+// Fan blades, drawn back-to-front so the center blade sits on top. Angle is
+// degrees from vertical (+ tilts right). Left→right hue order per the design
+// language: indigo · teal · plum · clay · violet.
+const BLADES = [
+  { angle: -32, color: [0x5b, 0x73, 0xc4] }, // indigo (far left)
+  { angle: 32, color: [0x8a, 0x6f, 0xc0] }, // violet (far right)
+  { angle: -16, color: [0x2f, 0x9e, 0x9b] }, // teal
+  { angle: 16, color: [0xbf, 0x8a, 0x4e] }, // clay
+  { angle: 0, color: [0xc2, 0x63, 0x8f] }, // plum (center, on top)
+];
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -24,32 +37,29 @@ function insideRoundRect(px, py, x0, y0, x1, y1, rad) {
   return true;
 }
 
-// Capsule (rounded horizontal segment) hit test.
-function inCapsule(px, py, xa, xb, yc, halfTh) {
-  const cx = clamp(px, xa, xb);
-  const dx = px - cx;
-  const dy = py - yc;
-  return dx * dx + dy * dy <= halfTh * halfTh;
-}
-
-function inTrigram(px, py, N) {
-  const barLeft = N * 0.27;
-  const barRight = N * 0.73;
-  const gap = N * 0.1;
-  const leftEnd = N / 2 - gap / 2;
-  const rightStart = N / 2 + gap / 2;
-  const halfTh = (N * 0.085) / 2;
-  const rows = [N * 0.34, N * 0.5, N * 0.66];
-  for (const yc of rows) {
-    if (inCapsule(px, py, barLeft, leftEnd, yc, halfTh)) return true;
-    if (inCapsule(px, py, rightStart, barRight, yc, halfTh)) return true;
-  }
-  return false;
+// Is the point inside this blade — a capsule from the pivot (0,0) straight up to
+// (0,-len) with radius hw, rotated by the blade's angle about the pivot?
+function inBlade(px, py, blade, pivotX, pivotY, len, hw) {
+  const t = (blade.angle * Math.PI) / 180;
+  const c = Math.cos(t);
+  const s = Math.sin(t);
+  const vx = px - pivotX;
+  const vy = py - pivotY;
+  const lx = vx * c + vy * s; // rotate the offset by -angle into blade-local space
+  const ly = -vx * s + vy * c;
+  const cy = clamp(ly, -len, 0);
+  const dx = lx;
+  const dy = ly - cy;
+  return dx * dx + dy * dy <= hw * hw;
 }
 
 function drawIcon(N) {
-  const SS = 4; // supersampling factor per axis
+  const SS = 4; // supersampling per axis
   const rad = N * 0.22;
+  const pivotX = N * 0.5;
+  const pivotY = N * 0.74;
+  const len = N * 0.46;
+  const hw = N * 0.085;
   const data = Buffer.alloc(N * N * 4);
 
   for (let y = 0; y < N; y++) {
@@ -66,16 +76,23 @@ function drawIcon(N) {
           const py = y + (sy + 0.5) / SS;
           if (!insideRoundRect(px, py, 0, 0, N, N, rad)) continue;
           covered++;
-          if (inTrigram(px, py, N)) {
-            sumR += 255;
-            sumG += 255;
-            sumB += 255;
-          } else {
-            const t = clamp((px + py) / (2 * N), 0, 1);
-            sumR += lerp(C1[0], C2[0], t);
-            sumG += lerp(C1[1], C2[1], t);
-            sumB += lerp(C1[2], C2[2], t);
+
+          // Start with the background gradient, then let each blade (front-most
+          // last) overwrite the color where it covers this sample.
+          const tg = clamp(py / N, 0, 1);
+          let r = lerp(BG_TOP[0], BG_BOTTOM[0], tg);
+          let g = lerp(BG_TOP[1], BG_BOTTOM[1], tg);
+          let b = lerp(BG_TOP[2], BG_BOTTOM[2], tg);
+          for (const blade of BLADES) {
+            if (inBlade(px, py, blade, pivotX, pivotY, len, hw)) {
+              r = blade.color[0];
+              g = blade.color[1];
+              b = blade.color[2];
+            }
           }
+          sumR += r;
+          sumG += g;
+          sumB += b;
         }
       }
 
@@ -135,10 +152,9 @@ function encodePNG(N, rgba) {
   ihdr[11] = 0; // filter
   ihdr[12] = 0; // interlace
 
-  // Raw scanlines, each prefixed by filter type 0.
   const raw = Buffer.alloc(N * (N * 4 + 1));
   for (let y = 0; y < N; y++) {
-    raw[y * (N * 4 + 1)] = 0;
+    raw[y * (N * 4 + 1)] = 0; // filter type 0
     rgba.copy(raw, y * (N * 4 + 1) + 1, y * N * 4, (y + 1) * N * 4);
   }
   const idat = deflateSync(raw, { level: 9 });
