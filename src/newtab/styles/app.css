@@ -134,6 +134,10 @@
 
 .pinned-wrap {
   padding: 4px 24px 14px;
+  /* Stacks the account and device-only bars when a profile has both. */
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .card {

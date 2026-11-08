@@ -12,10 +12,12 @@ import type { BookmarkActions } from '../hooks/useBookmarkActions';
 export function PinnedBar({
   parent,
   bookmarks,
+  label = 'Bookmarks Bar',
   actions,
 }: {
   parent: BookmarkNode;
   bookmarks: BookmarkNode[];
+  label?: string;
   actions: BookmarkActions;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -34,7 +36,7 @@ export function PinnedBar({
         {...drag.folderDropProps(parent.id)}
       >
         <div className="card-header-left">
-          <span className="card-title card-title--pinned">Bookmarks Bar</span>
+          <span className="card-title card-title--pinned">{label}</span>
         </div>
         <div className="card-header-right">
           <ChevronIcon collapsed={collapsed} />

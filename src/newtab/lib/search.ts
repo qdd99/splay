@@ -1,5 +1,6 @@
 import type { BookmarkNode } from '../types';
 import { fuzzyMatchBookmark } from './fuzzyMatch';
+import { rootKind } from './roots';
 
 export interface SearchResult {
   node: BookmarkNode;
@@ -38,8 +39,8 @@ export function searchBookmarks(root: BookmarkNode, query: string): SearchResult
   const top = root.children ?? [];
   for (const section of top) {
     if (!section.children) continue;
-    // Bookmarks Bar (id "1") is the implicit home — no breadcrumb prefix.
-    const prefix = section.id === '1' ? [] : [section.title];
+    // The Bookmarks Bar is the implicit home — no breadcrumb prefix.
+    const prefix = rootKind(section) === 'bookmarks-bar' ? [] : [section.title];
     walk(section, prefix);
   }
 

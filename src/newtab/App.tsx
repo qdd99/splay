@@ -12,14 +12,13 @@ import { densityScale, linkGridTemplate } from './lib/settings';
 import { countAll } from './lib/fuzzyMatch';
 import { distributeGreedy, estimateCardWeight } from './lib/layout';
 import { searchBookmarks } from './lib/search';
+import { rootLabel, rootsOfKind } from './lib/roots';
 import { SearchBar } from './components/SearchBar';
 import { SearchResults } from './components/SearchResults';
 import { PinnedBar } from './components/PinnedBar';
 import { CategoryCard } from './components/CategoryCard';
 import { TopLevelSection } from './components/TopLevelSection';
 import { GearIcon } from './components/Icons';
-
-const EMPTY: BookmarkNode = { id: '', title: '', children: [] };
 
 function openOptions() {
   if (typeof chrome !== 'undefined' && chrome.runtime?.openOptionsPage) {
@@ -41,13 +40,16 @@ export function App() {
   useArrowNavigation();
 
   const topLevel = root?.children ?? [];
-  const bookmarksBar = topLevel.find((c) => c.id === '1') ?? EMPTY;
-  const otherBookmarks = topLevel.find((c) => c.id === '2') ?? EMPTY;
-  const mobileBookmarks = topLevel.find((c) => c.id === '3') ?? EMPTY;
+  // A profile can have an account copy and a device-only copy of each permanent
+  // folder (see lib/roots.ts); each copy keeps its own section so drag-and-drop
+  // indices stay relative to the real parent folder.
+  const bars = rootsOfKind(topLevel, 'bookmarks-bar');
+  const others = rootsOfKind(topLevel, 'other');
+  const mobiles = rootsOfKind(topLevel, 'mobile');
 
-  const barChildren = bookmarksBar.children ?? [];
-  const pinnedLinks = barChildren.filter((c) => c.url);
-  const categories = barChildren.filter((c) => !c.url && c.children);
+  const categories = bars.flatMap((bar) =>
+    (bar.children ?? []).filter((c) => !c.url && c.children),
+  );
 
   const categoryIds = useMemo(() => categories.map((c) => c.id), [categories]);
   const accentFor = useAccentMap(categoryIds);
@@ -61,9 +63,6 @@ export function App() {
     () => topLevel.reduce((sum, c) => sum + countAll(c), 0),
     [topLevel],
   );
-
-  const showOther = settings.showOther && countAll(otherBookmarks) > 0;
-  const showMobile = settings.showMobile && countAll(mobileBookmarks) > 0;
 
   const numColumns = useColumnCount(settings.columns);
 
@@ -84,21 +83,26 @@ export function App() {
         />
       ),
     }));
-  if (showOther) {
-    cardItems.push({
-      node: otherBookmarks,
-      el: (
-        <TopLevelSection key="__other" section={otherBookmarks} label="Other Bookmarks" actions={actions} />
-      ),
-    });
-  }
-  if (showMobile) {
-    cardItems.push({
-      node: mobileBookmarks,
-      el: (
-        <TopLevelSection key="__mobile" section={mobileBookmarks} label="Mobile Bookmarks" actions={actions} />
-      ),
-    });
+  const sectionGroups: [boolean, BookmarkNode[], string][] = [
+    [settings.showOther, others, 'Other Bookmarks'],
+    [settings.showMobile, mobiles, 'Mobile Bookmarks'],
+  ];
+  for (const [show, group, base] of sectionGroups) {
+    if (!show) continue;
+    for (const section of group) {
+      if (countAll(section) === 0) continue;
+      cardItems.push({
+        node: section,
+        el: (
+          <TopLevelSection
+            key={section.id}
+            section={section}
+            label={rootLabel(section, group, base)}
+            actions={actions}
+          />
+        ),
+      });
+    }
   }
   const weights = cardItems.map((item) => estimateCardWeight(item.node, settings.cardColumns));
   const masonry: ReactNode[][] = distributeGreedy(weights, numColumns).map((indices) =>
@@ -148,7 +152,15 @@ export function App() {
         <>
           {settings.showPinned && (
             <div className="container pinned-wrap">
-              <PinnedBar parent={bookmarksBar} bookmarks={pinnedLinks} actions={actions} />
+              {bars.map((bar) => (
+                <PinnedBar
+                  key={bar.id}
+                  parent={bar}
+                  bookmarks={(bar.children ?? []).filter((c) => c.url)}
+                  label={rootLabel(bar, bars, 'Bookmarks Bar')}
+                  actions={actions}
+                />
+              ))}
             </div>
           )}
 
